@@ -4,7 +4,7 @@
 
 class Component
 {
-  private:
+  protected:
     const std::string m_id;
 
   public:
