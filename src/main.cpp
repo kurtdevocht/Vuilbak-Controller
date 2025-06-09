@@ -5,11 +5,11 @@
 #include "Settings.h"
 #include <WiFi.h>
 
-auto m_player1 = Player( "P1", Settings::Pin_P1_Left, Settings::Pin_P1_Right );
-auto m_player2 = Player( "P2", Settings::Pin_P2_Left, Settings::Pin_P2_Right );
+auto m_player1 = Player( "P1", Settings::Pins::P1_Left, Settings::Pins::P1_Right );
+auto m_player2 = Player( "P2", Settings::Pins::P2_Left, Settings::Pins::P2_Right );
 auto m_wiFiClient = WiFiClient();
 auto m_mqttClient = PubSubClient(m_wiFiClient);
-auto m_publisher = Publisher( "Vuilbak-Controller", m_mqttClient, "test.mosquitto.org");
+auto m_publisher = Publisher("Vuilbak-Controller", m_mqttClient, Settings::MQTT::ServerName, Settings::MQTT::ServerPort);
 
 void setup() {
   InitSerial();
@@ -41,17 +41,18 @@ void InitSerial()
 
 void InitWiFi()
 {
-  Serial.print("WiFifying...");
-  WiFi.mode(WIFI_STA);
-  WiFi.begin("****", "***");
+  Serial.print( "WiFifying... (Did you change SSID & Password in Settings.h?)" );
+  WiFi.mode( WIFI_STA );
+  WiFi.begin( Settings::WiFi::SSID.c_str(), Settings::WiFi::Password.c_str() );
 
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
+  while( WiFi.status() != WL_CONNECTED )
+  {
+    delay( 500 );
+    Serial.print( "." );
   }
 
-  Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
+  Serial.println( "" );
+  Serial.print( "WiFi connected! " );
+  Serial.print( "IP address: " );
+  Serial.println( WiFi.localIP() );
 }

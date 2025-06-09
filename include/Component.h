@@ -14,7 +14,4 @@ class Component
 
   protected:
     void Log( std::string message );
-/*
-    virtual ~Component() = default;
-*/
 };

@@ -1,7 +1,7 @@
 #include "Publisher.h"
 #include "Settings.h"
 
-void callback2(char* topic, byte* payload, unsigned int length) {
+void callback(char* topic, byte* payload, unsigned int length) {
     /*
   Serial.print("Message arrived [");
   Serial.print(topic);
@@ -22,18 +22,19 @@ void callback2(char* topic, byte* payload, unsigned int length) {
 */
 }
 
-Publisher::Publisher( std::string id, PubSubClient& mqttClient, std::string mqttServerName )
+Publisher::Publisher( std::string id, PubSubClient& mqttClient, std::string mqttServerName, uint32_t mqttServerPort )
     : Component( id )
     , m_mqttClient( mqttClient )
     , m_mqttServerName( mqttServerName )
+    , m_mqttServerPort(mqttServerPort)
 {
     
 }
 
 void Publisher::Init()
 {
-    m_mqttClient.setServer( m_mqttServerName.c_str(), 1883 );
-    m_mqttClient.setCallback(callback2);
+    m_mqttClient.setServer( m_mqttServerName.c_str(),  m_mqttServerPort );
+    m_mqttClient.setCallback( callback );
 }
 
 void Publisher::Update(unsigned long now_ms)
@@ -48,7 +49,7 @@ void Publisher::Update(unsigned long now_ms)
 void Publisher::PublishGameState( uint32_t p1Power, uint32_t p2Power )
 {
     auto now = millis();
-    if( now - m_lastPublish < Settings::MQTT_Message_Interval_ms)
+    if( now - m_lastPublish < Settings::MQTT::Message_Interval_ms)
     {
         return;
     }
