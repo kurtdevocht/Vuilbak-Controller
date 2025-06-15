@@ -1,15 +1,18 @@
 #include <Arduino.h>
 #include "Player.h"
-#include "Publisher.h"
+#include "MQTTProxy.h"
 #include "main.h"
 #include "Settings.h"
 #include <WiFi.h>
 
+auto m_gameRunning = false;
+auto m_startButton = Button( "StartButton", Settings::Pins::StartButton );
 auto m_player1 = Player( "P1", Settings::Pins::P1_Left, Settings::Pins::P1_Right );
 auto m_player2 = Player( "P2", Settings::Pins::P2_Left, Settings::Pins::P2_Right );
 auto m_wiFiClient = WiFiClient();
 auto m_mqttClient = PubSubClient(m_wiFiClient);
-auto m_publisher = Publisher("Vuilbak-Controller", m_mqttClient, Settings::MQTT::ServerName, Settings::MQTT::ServerPort);
+auto m_mqtt = MQTTProxy("Vuilbak-Controller", m_mqttClient, Settings::MQTT::ServerName, Settings::MQTT::ServerPort);
+unsigned long m_gameStartedMillis;
 
 void setup() {
   InitSerial();
@@ -17,20 +20,67 @@ void setup() {
 
   m_player1.Init();
   m_player2.Init();
-  m_publisher.Init();  
+  m_startButton.Init();
+  m_mqtt.Init();
+
+  m_mqttClient.publish(Settings::MQTT::Topics::ControllerIPAddress.c_str(), WiFi.localIP().toString().c_str());
+
+  Serial.print( "Press start..." );
 }
 
 void loop() {
   auto time_ms = millis();
-  m_player1.Update( time_ms );
-  m_player2.Update( time_ms );
-  m_publisher.Update( time_ms );
-  
-  Serial.printf( "P1.CPS = %f - P2.CPS = %f\n", m_player1.GetClicksPerSecond(), m_player2.GetClicksPerSecond() );
-  m_publisher.PublishGameState(
-    (int)( m_player1.GetClicksPerSecond() * 1000 ),
-    (int)( m_player2.GetClicksPerSecond() * 1000 )
-  );
+  if( !m_gameRunning )
+  {
+    if( IsStartButtonPressed(time_ms) )
+    {
+      InitNewGame( time_ms );
+    }
+  }
+  else if( time_ms <= m_gameStartedMillis + Settings::Game::PlayTime * 1000 )
+  {
+    m_player1.Update( time_ms );
+    m_player2.Update( time_ms );
+    m_mqtt.Update( time_ms );
+    
+    m_mqtt.PublishRunningGameState(
+      (int)( m_player1.GetClicksPerSecond() * 1000 ),
+      (int)( m_player2.GetClicksPerSecond() * 1000 )
+    );
+  }
+  else
+  {
+    m_gameRunning = false;
+    m_mqtt.PublishEndGameState();
+    delay( 5000 );
+  }
+}
+
+bool IsStartButtonPressed( unsigned long time_ms )
+{
+  m_startButton.Update( time_ms );
+  if( !m_startButton.IsFallingEdge() )
+  {
+    Serial.print( "." );
+    return false;
+  }
+
+  Serial.println();
+  return true;
+}
+
+void InitNewGame( unsigned long time_ms )
+{
+    Serial.print( "New game started!" );
+    
+    m_gameRunning = true;
+    m_gameStartedMillis = time_ms;
+
+    m_mqtt.DisplayCountdown( Settings::Game::CountdownTime );
+    delay( 1000 * Settings::Game::CountdownTime );
+
+    m_mqtt.DisplayCountdown( Settings::Game::CountdownTime + Settings::Game::PlayTime );
+    m_mqtt.DisplayMessage( Settings::Game::StartMessage, 2 );
 }
 
 void InitSerial()
