@@ -6,8 +6,9 @@ namespace Settings
 {
     namespace WiFi
     {
-        #if __has_include("secrets.h")
-        # include "secrets.h"
+        // Add a local file "Secrets.h" to keep these values out of source control
+        #if __has_include("Secrets.h")
+        # include "Secrets.h"
         #else
         static const std::string SSID( "*****" );
         static const std::string Password( "*****" );
@@ -20,8 +21,9 @@ namespace Settings
         // e.g.: 200 ms = values are sent to the MQTT broker 5 times per second
         static const uint32_t Message_Interval_ms(200);
         
-        #if __has_include("secrets.h")
-        # include "secrets.h"
+        // Add a local file "Secrets.h" to keep these values out of source control
+        #if __has_include("Secrets.h")
+        # include "Secrets.h"
         #else
         static const std::string ServerName("test.mosquitto.org");
         static const uint32_t ServerPort(1883);
@@ -59,7 +61,11 @@ namespace Settings
     namespace Game
     {
         static const uint32_t CountdownTime( 5 );
-        static const uint32_t PlayTime( 60 );
+        static const uint32_t PlayTime_s( 60 );
+        static const uint32_t MaxDekselValue( 35 );
+        static const uint32_t MinDekselValue( 12 );
+        static const float ClicksPerSecondNeededForMaxDekselValueAtBeginOfGame( 2.0f );
+        static const float ClicksPerSecondNeededForMaxDekselValueAtEndOfGame( 35.0f );
         static const std::string StartMessage( "! Go Go Gooi !" );
     }
 }

@@ -37,21 +37,22 @@ void loop() {
       InitNewGame( time_ms );
     }
   }
-  else if( time_ms <= m_gameStartedMillis + Settings::Game::PlayTime * 1000 )
+  else if( time_ms <= m_gameStartedMillis + Settings::Game::PlayTime_s * 1000 )
   {
     m_player1.Update( time_ms );
     m_player2.Update( time_ms );
     m_mqtt.Update( time_ms );
     
-    m_mqtt.PublishRunningGameState(
-      (int)( m_player1.GetClicksPerSecond() * 1000 ),
-      (int)( m_player2.GetClicksPerSecond() * 1000 )
-    );
+    auto p1Deksel = ClicksPerSecondToDekselValue( m_player1.GetClicksPerSecond(), time_ms - m_gameStartedMillis );
+    auto p2Deksel = ClicksPerSecondToDekselValue( m_player2.GetClicksPerSecond(), time_ms - m_gameStartedMillis );
+
+    m_mqtt.PublishRunningGameState( p1Deksel, p2Deksel );
   }
   else
   {
     m_gameRunning = false;
     m_mqtt.PublishEndGameState();
+    m_mqtt.Update( time_ms );
     delay( 5000 );
   }
 }
@@ -79,7 +80,7 @@ void InitNewGame( unsigned long time_ms )
     m_mqtt.DisplayCountdown( Settings::Game::CountdownTime );
     delay( 1000 * Settings::Game::CountdownTime );
 
-    m_mqtt.DisplayCountdown( Settings::Game::CountdownTime + Settings::Game::PlayTime );
+    m_mqtt.DisplayCountdown( Settings::Game::CountdownTime + Settings::Game::PlayTime_s );
     m_mqtt.DisplayMessage( Settings::Game::StartMessage, 2 );
 }
 
@@ -91,7 +92,7 @@ void InitSerial()
 
 void InitWiFi()
 {
-  Serial.print( "WiFifying... (Did you change SSID & Password in Settings.h?)" );
+  Serial.print( "WiFifying... (Did you change SSID & Password in Settings.h or Secrets.h?)" );
   WiFi.mode( WIFI_STA );
   WiFi.begin( Settings::WiFi::SSID.c_str(), Settings::WiFi::Password.c_str() );
 
@@ -105,4 +106,35 @@ void InitWiFi()
   Serial.print( "WiFi connected! " );
   Serial.print( "IP address: " );
   Serial.println( WiFi.localIP() );
+}
+
+int ClicksPerSecondToDekselValue( float clicksPerSecond, unsigned long gameRunTime_ms )
+{
+  if( clicksPerSecond <= 0.0f )
+  {
+    return 0;
+  }
+
+  unsigned long gamePlayTime_ms = Settings::Game::PlayTime_s * 1000;
+  if( gameRunTime_ms >= gamePlayTime_ms )
+  {
+    return 0;
+  }
+
+  float neededCpsForMax =
+    Settings::Game::ClicksPerSecondNeededForMaxDekselValueAtBeginOfGame
+    + gameRunTime_ms * ( Settings::Game::ClicksPerSecondNeededForMaxDekselValueAtEndOfGame - Settings::Game::ClicksPerSecondNeededForMaxDekselValueAtBeginOfGame ) / gamePlayTime_ms;
+
+  int value = (int)(
+    Settings::Game::MinDekselValue
+    + clicksPerSecond * ( Settings::Game::MaxDekselValue - Settings::Game::MinDekselValue ) / neededCpsForMax
+    + 0.5f
+  );
+
+  if( value > Settings::Game::MaxDekselValue )
+  {
+    return Settings::Game::MaxDekselValue;
+  }
+
+  return value;
 }
