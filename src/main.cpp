@@ -97,6 +97,7 @@ void InitWiFi()
 {
   Serial.print( "WiFifying... (Did you change SSID & Password in Settings.h or Secrets.h?)" );
   WiFi.mode( WIFI_STA );
+  WiFi.setAutoReconnect( true );
   WiFi.begin( Settings::WiFi::SSID.c_str(), Settings::WiFi::Password.c_str() );
 
   while( WiFi.status() != WL_CONNECTED )

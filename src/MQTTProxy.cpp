@@ -3,9 +3,9 @@
 #include <sstream>
 
 // Quick imlementation: just some globals... Deadline is approaching 8-|
-int g_Vuilbak1Score ( 0 );
-int g_Vuilbak2Score ( 0 );
-bool g_ScoreUpdated ( false );
+int g_LastReceivedVuilbak1Score ( 0 );
+int g_LastReceivedVuilbak2Score ( 0 );
+bool g_NewScoreReceived ( false );
 
 int BytesToInt( byte * bytes, unsigned int length )
 {
@@ -30,18 +30,18 @@ void Callback( char* topic, byte* payload, unsigned int length ) {
 
   if( strcmp(topic, Settings::MQTT::Topics::Vuilbak1Score.c_str()) == 0 )
   {
-     g_Vuilbak1Score = BytesToInt( payload, length );
-     Serial.printf( "vuilbak_1_score = %d", g_Vuilbak1Score);
+     g_LastReceivedVuilbak1Score = BytesToInt( payload, length );
+     Serial.printf( "vuilbak_1_score = %d", g_LastReceivedVuilbak1Score);
      Serial.println();
-     g_ScoreUpdated = true;     
+     g_NewScoreReceived = true;     
   }
 
   if( strcmp(topic, Settings::MQTT::Topics::Vuilbak2Score.c_str()) == 0 )
   {
-     g_Vuilbak2Score = BytesToInt( payload, length );
-     Serial.printf( "vuilbak_2_score = %d", g_Vuilbak2Score);
+     g_LastReceivedVuilbak2Score = BytesToInt( payload, length );
+     Serial.printf( "vuilbak_2_score = %d", g_LastReceivedVuilbak2Score);
      Serial.println();
-     g_ScoreUpdated = true;
+     g_NewScoreReceived = true;
   }
 }
 
@@ -100,6 +100,7 @@ void MQTTProxy::DisplayCountdown( int value )
     );
 }
 
+
 void MQTTProxy::AnnounceGameStart( int playTime )
 {
     std::ostringstream json;
@@ -127,11 +128,11 @@ void MQTTProxy::PublishScore()
     std::ostringstream json;
     json
         << "{\"bericht\":\""
-        << (g_Vuilbak1Score < 10 ? " " : "")
-        << g_Vuilbak1Score
+        << (g_LastReceivedVuilbak1Score < 10 ? " " : "")
+        << g_LastReceivedVuilbak1Score
         << "-"
-        << (g_Vuilbak2Score < 10 ? " " : "")
-        << g_Vuilbak2Score
+        << (g_LastReceivedVuilbak2Score < 10 ? " " : "")
+        << g_LastReceivedVuilbak2Score
         << "\", \"tijd\":1, \"kleur\":64639}";
 
     this->CheckConnectionAndPublish(
@@ -155,7 +156,7 @@ void MQTTProxy::PublishRunningGameState( uint32_t p1Power, uint32_t p2Power, flo
     this->CheckConnectionAndPublish( Settings::MQTT::Topics::Vuilbak1CPS, this->BuildCPSString( p1CPS ) );
     this->CheckConnectionAndPublish( Settings::MQTT::Topics::Vuilbak2CPS, this->BuildCPSString( p2CPS ) );
 
-    if( g_ScoreUpdated )
+    if( g_NewScoreReceived )
     {
         this->PublishScore();
     }
@@ -173,13 +174,13 @@ void MQTTProxy::PublishEndGameState()
     std::string jsonRed = "{\"strip\":60, \"result\":1, \"kleur\": 63488";
     std::string jsonPurple = "{\"strip\":60, \"result\":1, \"kleur\": 63775";
 
-    if( g_Vuilbak1Score > g_Vuilbak2Score )
+    if( g_LastReceivedVuilbak1Score > g_LastReceivedVuilbak2Score )
     {
         this->DisplayMessage( Settings::Game::Messages::Team1Wins );
         this->CheckConnectionAndPublish( Settings::MQTT::Topics::Vuilbak1Message, jsonGreen.c_str() );
         this->CheckConnectionAndPublish( Settings::MQTT::Topics::Vuilbak2Message, jsonRed.c_str() );
     }
-    else if( g_Vuilbak2Score > g_Vuilbak1Score )
+    else if( g_LastReceivedVuilbak2Score > g_LastReceivedVuilbak1Score )
     {
         this->DisplayMessage( Settings::Game::Messages::Team2Wins );
         this->CheckConnectionAndPublish( Settings::MQTT::Topics::Vuilbak1Message, jsonRed );
