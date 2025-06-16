@@ -36,6 +36,8 @@ namespace Settings
             static const std::string Vuilbak2Score( "Supervlieg2025/vuilbakkenrace/vuilbak/2/score" );
             static const std::string Vuilbak1Message( "Supervlieg2025/vuilbakkenrace/vuilbak/1/message" );
             static const std::string Vuilbak2Message( "Supervlieg2025/vuilbakkenrace/vuilbak/2/message" );
+            static const std::string Vuilbak1CPS( "Supervlieg2025/vuilbakkenrace/vuilbak/1/CPS" );
+            static const std::string Vuilbak2CPS( "Supervlieg2025/vuilbakkenrace/vuilbak/2/CPS" );
             static const std::string DisplayMessage( "Supervlieg2025/vuilbakkenrace/matrixdisplay/message" );
         }
     }
@@ -60,12 +62,19 @@ namespace Settings
 
     namespace Game
     {
-        static const uint32_t CountdownTime( 5 );
+        static const uint32_t CountdownTime( 6 );
         static const uint32_t PlayTime_s( 60 );
         static const uint32_t MaxDekselValue( 35 );
         static const uint32_t MinDekselValue( 12 );
-        static const float ClicksPerSecondNeededForMaxDekselValueAtBeginOfGame( 2.0f );
-        static const float ClicksPerSecondNeededForMaxDekselValueAtEndOfGame( 35.0f );
-        static const std::string StartMessage( "! Go Go Gooi !" );
+        static const float ClicksPerSecondNeededForMaxDekselValueAtBeginOfGame( 8.0f );
+        static const float ClicksPerSecondNeededForMaxDekselValueAtEndOfGame( 25.0f );
+
+        namespace Messages
+        {
+            static const std::string Start( "Gooien & wiebelen maar!" );
+            static const std::string Team1Wins( "<< Team 1 wint! << Team 1 wint! <<" );
+            static const std::string Team2Wins( ">> Team 2 wint! >> Team 2 wint! >>" );
+            static const std::string BothWin( "Iedereen gewonnen! En iedereen verloren ook!" );
+        }
     }
 }

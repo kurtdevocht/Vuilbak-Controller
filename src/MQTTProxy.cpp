@@ -63,30 +63,40 @@ void MQTTProxy::Init()
 
 void MQTTProxy::Update(unsigned long now_ms)
 {
-    if (!m_mqttClient.connected())
-    {
-       this->Reconnect();
-    }
+    
     m_mqttClient.loop();
+}
+
+void MQTTProxy::DisplayMessage( std::string message )
+{
+    std::ostringstream json;
+    json << "{\"bericht\":\"" << message << "\", \"kleur\":255}";
+
+    this->CheckConnectionAndPublish(
+        Settings::MQTT::Topics::DisplayMessage,
+        json.str()
+    );
 }
 
 void MQTTProxy::DisplayMessage( std::string message, int timeSeconds )
 {
     std::ostringstream json;
-    json << "{\"bericht\":\"" << message << "\", \"tijd\":" << timeSeconds << "}";
-    m_mqttClient.publish(
-        Settings::MQTT::Topics::DisplayMessage.c_str(),
-        json.str().c_str()
+    json << "{\"bericht\":\"" << message << "\", \"tijd\":" << timeSeconds << ", \"kleur\":255}";
+
+    this->CheckConnectionAndPublish(
+        Settings::MQTT::Topics::DisplayMessage,
+        json.str()
     );
 }
 
 void MQTTProxy::DisplayCountdown( int value )
 {
     std::ostringstream json;
-    json << "{\"tijd\":" << value << ", \"mode\":1}";
-    m_mqttClient.publish(
-        Settings::MQTT::Topics::DisplayMessage.c_str(),
-        json.str().c_str()
+    json << "{\"tijd\":" << value << ", \"mode\":1, \"kleur\": 64252}";
+    
+    this->CheckConnectionAndPublish(
+        Settings::MQTT::Topics::DisplayMessage,
+        json.str()
     );
 }
 
@@ -94,35 +104,43 @@ void MQTTProxy::AnnounceGameStart( int playTime )
 {
     std::ostringstream json;
     json << "{\"start\":" << playTime << "}";
-    m_mqttClient.publish(
-        Settings::MQTT::Topics::Vuilbak1Message.c_str(),
-        json.str().c_str()
+
+    this->CheckConnectionAndPublish(
+        Settings::MQTT::Topics::Vuilbak1Message,
+        json.str()
     );
-     m_mqttClient.publish(
+
+    this->CheckConnectionAndPublish(
         Settings::MQTT::Topics::Vuilbak2Message.c_str(),
-        json.str().c_str()
+        json.str()
     );
+}
+
+void MQTTProxy::CheckConnectionAndPublish( std::string topic, std::string value)
+{
+    this->CheckConnection();
+     m_mqttClient.publish( topic.c_str(), value.c_str() );
 }
 
 void MQTTProxy::PublishScore()
 {
     std::ostringstream json;
     json
-        << "{\"bericht\":\"  "
+        << "{\"bericht\":\""
         << (g_Vuilbak1Score < 10 ? " " : "")
         << g_Vuilbak1Score
-        << "  -  "
+        << "-"
         << (g_Vuilbak2Score < 10 ? " " : "")
         << g_Vuilbak2Score
-        << "\", \"tijd\":1";
+        << "\", \"tijd\":1, \"kleur\":64639}";
 
-    m_mqttClient.publish(
-        Settings::MQTT::Topics::DisplayMessage.c_str(),
-        json.str().c_str()
+    this->CheckConnectionAndPublish(
+        Settings::MQTT::Topics::DisplayMessage,
+        json.str()
     );
 }
 
-void MQTTProxy::PublishRunningGameState( uint32_t p1Power, uint32_t p2Power )
+void MQTTProxy::PublishRunningGameState( uint32_t p1Power, uint32_t p2Power, float p1CPS, float p2CPS )
 {
     auto now = millis();
     if( now - m_lastPublish < Settings::MQTT::Message_Interval_ms)
@@ -131,8 +149,11 @@ void MQTTProxy::PublishRunningGameState( uint32_t p1Power, uint32_t p2Power )
     }
 
     m_lastPublish = now;
-    m_mqttClient.publish( Settings::MQTT::Topics::Vuilbak1Message.c_str(), this->BuildDekselString( p1Power ).c_str() );
-    m_mqttClient.publish( Settings::MQTT::Topics::Vuilbak2Message.c_str(), this->BuildDekselString( p2Power ).c_str() );
+    this->CheckConnectionAndPublish( Settings::MQTT::Topics::Vuilbak1Message, this->BuildDekselString( p1Power ) );
+    this->CheckConnectionAndPublish( Settings::MQTT::Topics::Vuilbak2Message, this->BuildDekselString( p2Power ) );
+
+    this->CheckConnectionAndPublish( Settings::MQTT::Topics::Vuilbak1CPS, this->BuildCPSString( p1CPS ) );
+    this->CheckConnectionAndPublish( Settings::MQTT::Topics::Vuilbak2CPS, this->BuildCPSString( p2CPS ) );
 
     if( g_ScoreUpdated )
     {
@@ -142,8 +163,10 @@ void MQTTProxy::PublishRunningGameState( uint32_t p1Power, uint32_t p2Power )
 
 void MQTTProxy::PublishEndGameState()
 {
-    m_mqttClient.publish( Settings::MQTT::Topics::Vuilbak1Message.c_str(), this->BuildDekselString( 0 ).c_str() );
-    m_mqttClient.publish( Settings::MQTT::Topics::Vuilbak2Message.c_str(), this->BuildDekselString( 0 ).c_str() );
+    this->CheckConnection();
+
+    this->CheckConnectionAndPublish( Settings::MQTT::Topics::Vuilbak1Message, this->BuildDekselString( 0 ) );
+    this->CheckConnectionAndPublish( Settings::MQTT::Topics::Vuilbak2Message, this->BuildDekselString( 0 ) );
 
     // https://rgbcolorpicker.com/565
     std::string jsonGreen = "{\"strip\":60, \"result\":1, \"kleur\": 2016";
@@ -152,21 +175,29 @@ void MQTTProxy::PublishEndGameState()
 
     if( g_Vuilbak1Score > g_Vuilbak2Score )
     {
-        this->DisplayMessage( "<< Team 1 wint!", 5 );
-        m_mqttClient.publish( Settings::MQTT::Topics::Vuilbak1Message.c_str(), jsonGreen.c_str() );
-        m_mqttClient.publish( Settings::MQTT::Topics::Vuilbak2Message.c_str(), jsonRed.c_str() );
+        this->DisplayMessage( Settings::Game::Messages::Team1Wins );
+        this->CheckConnectionAndPublish( Settings::MQTT::Topics::Vuilbak1Message, jsonGreen.c_str() );
+        this->CheckConnectionAndPublish( Settings::MQTT::Topics::Vuilbak2Message, jsonRed.c_str() );
     }
     else if( g_Vuilbak2Score > g_Vuilbak1Score )
     {
-        this->DisplayMessage( "Team 2 wint! >>", 5 );
-        m_mqttClient.publish( Settings::MQTT::Topics::Vuilbak1Message.c_str(), jsonRed.c_str() );
-        m_mqttClient.publish( Settings::MQTT::Topics::Vuilbak2Message.c_str(), jsonGreen.c_str() );
+        this->DisplayMessage( Settings::Game::Messages::Team2Wins );
+        this->CheckConnectionAndPublish( Settings::MQTT::Topics::Vuilbak1Message, jsonRed );
+        this->CheckConnectionAndPublish( Settings::MQTT::Topics::Vuilbak2Message, jsonGreen );
     }
     else
     {
-        this->DisplayMessage( "Iedereen wint!", 5 );
-        m_mqttClient.publish( Settings::MQTT::Topics::Vuilbak1Message.c_str(), jsonPurple.c_str() );
-        m_mqttClient.publish( Settings::MQTT::Topics::Vuilbak2Message.c_str(), jsonPurple.c_str() );
+        this->DisplayMessage( Settings::Game::Messages::BothWin );
+        this->CheckConnectionAndPublish( Settings::MQTT::Topics::Vuilbak1Message, jsonPurple );
+        this->CheckConnectionAndPublish( Settings::MQTT::Topics::Vuilbak2Message, jsonPurple );
+    }
+}
+
+void MQTTProxy::CheckConnection()
+{
+    if (!m_mqttClient.connected())
+    {
+       this->Reconnect();
     }
 }
 
@@ -197,4 +228,11 @@ std::string MQTTProxy::BuildDekselString( int value )
     std::ostringstream json;
     json << "{\"deksel\":" << value << "}";
     return json.str();
+}
+
+std::string MQTTProxy::BuildCPSString( float value )
+{
+    std::ostringstream raw;
+    raw << "Currently wiggling @ " << value << " CPS";
+    return raw.str();
 }

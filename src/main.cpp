@@ -22,6 +22,7 @@ void setup() {
   m_player2.Init();
   m_startButton.Init();
   m_mqtt.Init();
+  m_mqtt.Update( 0 ); // Force reconnect at startup
 
   m_mqttClient.publish(Settings::MQTT::Topics::ControllerIPAddress.c_str(), WiFi.localIP().toString().c_str());
 
@@ -42,11 +43,14 @@ void loop() {
     m_player1.Update( time_ms );
     m_player2.Update( time_ms );
     m_mqtt.Update( time_ms );
-    
-    auto p1Deksel = ClicksPerSecondToDekselValue( m_player1.GetClicksPerSecond(), time_ms - m_gameStartedMillis );
-    auto p2Deksel = ClicksPerSecondToDekselValue( m_player2.GetClicksPerSecond(), time_ms - m_gameStartedMillis );
 
-    m_mqtt.PublishRunningGameState( p1Deksel, p2Deksel );
+    auto p1CPS = m_player1.GetClicksPerSecond();
+    auto p2CPS = m_player2.GetClicksPerSecond();
+    
+    auto p1Deksel = ClicksPerSecondToDekselValue( p1CPS, time_ms - m_gameStartedMillis );
+    auto p2Deksel = ClicksPerSecondToDekselValue( p2CPS, time_ms - m_gameStartedMillis );
+
+    m_mqtt.PublishRunningGameState( p1Deksel, p2Deksel, p1CPS, p2Deksel );
   }
   else
   {
@@ -62,7 +66,6 @@ bool IsStartButtonPressed( unsigned long time_ms )
   m_startButton.Update( time_ms );
   if( !m_startButton.IsFallingEdge() )
   {
-    Serial.print( "." );
     return false;
   }
 
@@ -73,15 +76,15 @@ bool IsStartButtonPressed( unsigned long time_ms )
 void InitNewGame( unsigned long time_ms )
 {
     Serial.print( "New game started!" );
-    
-    m_gameRunning = true;
-    m_gameStartedMillis = time_ms;
 
     m_mqtt.DisplayCountdown( Settings::Game::CountdownTime );
     delay( 1000 * Settings::Game::CountdownTime );
 
-    m_mqtt.DisplayCountdown( Settings::Game::CountdownTime + Settings::Game::PlayTime_s );
-    m_mqtt.DisplayMessage( Settings::Game::StartMessage, 2 );
+    m_gameRunning = true;
+    m_gameStartedMillis = time_ms;
+    m_mqtt.DisplayCountdown( Settings::Game::PlayTime_s );  
+    m_mqtt.DisplayMessage( Settings::Game::Messages::Start );
+    m_mqtt.AnnounceGameStart( Settings::Game::PlayTime_s );
 }
 
 void InitSerial()
