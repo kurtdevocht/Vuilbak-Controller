@@ -20,9 +20,11 @@ int BytesToInt( byte * bytes, unsigned int length )
 
 void Callback( char* topic, byte* payload, unsigned int length ) {
   
-  Serial.print("MQTT Callback | ");
-  Serial.print(topic);
-  Serial.print( " | " );
+  Serial.printf( "%u -- %s -- topic = %s -- payload =",
+        millis(),
+        "MQTT Callback",
+        topic );
+  
   for (int i = 0; i < length; i++) {
     Serial.print((char)payload[i]);
   }
@@ -31,7 +33,7 @@ void Callback( char* topic, byte* payload, unsigned int length ) {
   if( strcmp(topic, Settings::MQTT::Topics::Vuilbak1Score.c_str()) == 0 )
   {
      g_LastReceivedVuilbak1Score = BytesToInt( payload, length );
-     Serial.printf( "vuilbak_1_score = %d", g_LastReceivedVuilbak1Score);
+     Serial.printf( "    => vuilbak_1_score = %d", g_LastReceivedVuilbak1Score);
      Serial.println();
      g_NewScoreReceived = true;     
   }
@@ -39,7 +41,7 @@ void Callback( char* topic, byte* payload, unsigned int length ) {
   if( strcmp(topic, Settings::MQTT::Topics::Vuilbak2Score.c_str()) == 0 )
   {
      g_LastReceivedVuilbak2Score = BytesToInt( payload, length );
-     Serial.printf( "vuilbak_2_score = %d", g_LastReceivedVuilbak2Score);
+     Serial.printf( "    => vuilbak_2_score = %d", g_LastReceivedVuilbak2Score);
      Serial.println();
      g_NewScoreReceived = true;
   }
@@ -63,7 +65,6 @@ void MQTTProxy::Init()
 
 void MQTTProxy::Update(unsigned long now_ms)
 {
-    
     m_mqttClient.loop();
 }
 
@@ -121,6 +122,7 @@ void MQTTProxy::CheckConnectionAndPublish( std::string topic, std::string value)
 {
     this->CheckConnection();
      m_mqttClient.publish( topic.c_str(), value.c_str() );
+     Log( "Published topic " + topic + " -- " + value);
 }
 
 void MQTTProxy::PublishScore()
@@ -170,9 +172,9 @@ void MQTTProxy::PublishEndGameState()
     this->CheckConnectionAndPublish( Settings::MQTT::Topics::Vuilbak2Message, this->BuildDekselString( 0 ) );
 
     // https://rgbcolorpicker.com/565
-    std::string jsonGreen = "{\"strip\":60, \"result\":1, \"kleur\": 2016";
-    std::string jsonRed = "{\"strip\":60, \"result\":1, \"kleur\": 63488";
-    std::string jsonPurple = "{\"strip\":60, \"result\":1, \"kleur\": 63775";
+    std::string jsonGreen = "{\"strip\":60, \"result\":1, \"kleur\": 2016}";
+    std::string jsonRed = "{\"strip\":60, \"result\":1, \"kleur\": 63488}";
+    std::string jsonPurple = "{\"strip\":60, \"result\":1, \"kleur\": 63775}";
 
     if( g_LastReceivedVuilbak1Score > g_LastReceivedVuilbak2Score )
     {

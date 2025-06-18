@@ -47,7 +47,7 @@ void Button::Update(unsigned long now_ms)
   if (m_isRisingEdge || m_isFallingEdge)
   {
     SetDebounceIgnoreTime( now_ms );
-    LogStatus();
+    // LogStatus();
   }
 
   m_wasHighOnPreviousUpdate = pinIsHigh;
