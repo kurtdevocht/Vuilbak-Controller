@@ -86,6 +86,8 @@ void InitNewGame( unsigned long time_ms )
 {
     Log( "New game started!" );
 
+    m_mqtt.CloseVuilbakken();
+
     m_mqtt.DisplayCountdown( Settings::Game::CountdownTime );
     delay( 1000 * Settings::Game::CountdownTime );
 

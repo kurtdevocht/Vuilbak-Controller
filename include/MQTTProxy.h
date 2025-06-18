@@ -20,6 +20,7 @@ class MQTTProxy
         void DisplayMessage( std::string message, int time );
         void DisplayCountdown( int value );
         void AnnounceGameStart( int playTime );
+        void CloseVuilbakken();
         void PublishRunningGameState( uint32_t p1Power, uint32_t p2Power, float p1CPS, float p2CPS );
         void PublishEndGameState();
 

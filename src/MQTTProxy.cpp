@@ -101,6 +101,22 @@ void MQTTProxy::DisplayCountdown( int value )
     );
 }
 
+void MQTTProxy::CloseVuilbakken()
+{
+    std::ostringstream json;
+    json << "{\"deksel\": 0}";
+
+    this->CheckConnectionAndPublish(
+        Settings::MQTT::Topics::Vuilbak1Message,
+        json.str()
+    );
+
+    this->CheckConnectionAndPublish(
+        Settings::MQTT::Topics::Vuilbak2Message.c_str(),
+        json.str()
+    );
+}
+
 
 void MQTTProxy::AnnounceGameStart( int playTime )
 {
@@ -130,10 +146,10 @@ void MQTTProxy::PublishScore()
     std::ostringstream json;
     json
         << "{\"bericht\":\""
-        << (g_LastReceivedVuilbak1Score < 10 ? " " : "")
+        //<< (g_LastReceivedVuilbak1Score < 10 ? " " : "")
         << g_LastReceivedVuilbak1Score
         << "-"
-        << (g_LastReceivedVuilbak2Score < 10 ? " " : "")
+        //<< (g_LastReceivedVuilbak2Score < 10 ? " " : "")
         << g_LastReceivedVuilbak2Score
         << "\", \"tijd\":1, \"kleur\":64639}";
 
@@ -160,6 +176,7 @@ void MQTTProxy::PublishRunningGameState( uint32_t p1Power, uint32_t p2Power, flo
 
     if( g_NewScoreReceived )
     {
+        g_NewScoreReceived = false;
         this->PublishScore();
     }
 }
