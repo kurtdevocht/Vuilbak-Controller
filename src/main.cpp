@@ -92,7 +92,7 @@ void InitNewGame( unsigned long time_ms )
     delay( 1000 * Settings::Game::CountdownTime );
 
     m_gameRunning = true;
-    m_gameStartedMillis = time_ms;
+    m_gameStartedMillis = millis();
     m_mqtt.DisplayCountdown( Settings::Game::PlayTime_s );  
     m_mqtt.DisplayMessage( Settings::Game::Messages::Start );
     m_mqtt.AnnounceGameStart( Settings::Game::PlayTime_s );
