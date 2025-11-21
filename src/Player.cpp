@@ -14,7 +14,7 @@ void Player::Init()
     m_buttonRight.Init();
 }
 
-float Player::GetClicksPerSecond()
+float Player::GetClicksPerSecond() const
 {
   return (1000.0f * m_clickTimeStamps.size()) / c_clicksPerSecondsWindow_ms;
 }
@@ -37,18 +37,8 @@ void Player::Update(unsigned long now_ms)
 
 void Player::ForgetOldClicks(unsigned long now_ms)
 {
-  /*
-   * C++20 and up only... => Not supported by current platform.io (?)
-   *
-  std::erase_if(
-    m_clickTimeStamps,
-    [this, now_ms](unsigned long timeStamp)
-    {
-      return timeStamp < now_ms - c_clicksPerSecondsWindow_ms;
-    }
-  );
-  */
-
+  // Remove clicks that are older than the time window
+  // Using erase-remove idiom for pre-C++20 compatibility
   m_clickTimeStamps.erase(
     std::remove_if(
         m_clickTimeStamps.begin(),

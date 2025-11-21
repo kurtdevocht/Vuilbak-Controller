@@ -119,8 +119,6 @@ void InitWiFi()
   }
 
   Log( "WiFi connected!" );
-
-  //Log( "IP address: " + WiFi.localIP());
 }
 
 void InitMQTT()

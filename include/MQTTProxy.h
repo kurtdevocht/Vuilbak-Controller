@@ -6,7 +6,7 @@
 #include "Component.h"
 
 class MQTTProxy
-  : Component
+  : public Component
 {
     private:
         std::string m_mqttServerName;

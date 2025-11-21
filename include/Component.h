@@ -9,6 +9,7 @@ class Component
 
   public:
     Component( std::string id );
+    virtual ~Component() = default;
     virtual void Init() = 0;
     virtual void Update( unsigned long now_ms ) = 0;
 

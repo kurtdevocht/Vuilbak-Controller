@@ -112,7 +112,7 @@ void MQTTProxy::CloseVuilbakken()
     );
 
     this->CheckConnectionAndPublish(
-        Settings::MQTT::Topics::Vuilbak2Message.c_str(),
+        Settings::MQTT::Topics::Vuilbak2Message,
         json.str()
     );
 }
@@ -129,7 +129,7 @@ void MQTTProxy::AnnounceGameStart( int playTime )
     );
 
     this->CheckConnectionAndPublish(
-        Settings::MQTT::Topics::Vuilbak2Message.c_str(),
+        Settings::MQTT::Topics::Vuilbak2Message,
         json.str()
     );
 }
@@ -146,10 +146,8 @@ void MQTTProxy::PublishScore()
     std::ostringstream json;
     json
         << "{\"bericht\":\""
-        //<< (g_LastReceivedVuilbak1Score < 10 ? " " : "")
         << g_LastReceivedVuilbak1Score
         << "-"
-        //<< (g_LastReceivedVuilbak2Score < 10 ? " " : "")
         << g_LastReceivedVuilbak2Score
         << "\", \"tijd\":1, \"kleur\":64639}";
 
@@ -196,8 +194,8 @@ void MQTTProxy::PublishEndGameState()
     if( g_LastReceivedVuilbak1Score > g_LastReceivedVuilbak2Score )
     {
         this->DisplayMessage( Settings::Game::Messages::Team1Wins );
-        this->CheckConnectionAndPublish( Settings::MQTT::Topics::Vuilbak1Message, jsonGreen.c_str() );
-        this->CheckConnectionAndPublish( Settings::MQTT::Topics::Vuilbak2Message, jsonRed.c_str() );
+        this->CheckConnectionAndPublish( Settings::MQTT::Topics::Vuilbak1Message, jsonGreen );
+        this->CheckConnectionAndPublish( Settings::MQTT::Topics::Vuilbak2Message, jsonRed );
     }
     else if( g_LastReceivedVuilbak2Score > g_LastReceivedVuilbak1Score )
     {
@@ -238,7 +236,6 @@ void MQTTProxy::Reconnect()
         } 
     
         this->Log( "MQTT Connection failed, retry in 5 seconds..." );
-        // Error code is in m_mqttClient.state()
         delay( 5000 );
     }
 }

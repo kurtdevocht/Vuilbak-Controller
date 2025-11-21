@@ -8,7 +8,7 @@
 #include "Button.h"
 
 class Player
-  : Component
+  : public Component
 {
   private:
     const unsigned long c_clicksPerSecondsWindow_ms = 3000;
@@ -19,7 +19,7 @@ class Player
 
   public:
     Player( std::string id, uint8_t buttonPinLeft, uint8_t buttonPinRight);
-    float GetClicksPerSecond();
+    float GetClicksPerSecond() const;
 
   public:
     void Init() override;
