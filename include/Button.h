@@ -6,7 +6,7 @@
 #include "Component.h"
 
 class Button
-  : Component
+  : public Component
 {
   private:
     const unsigned long c_debounceTimeMillis = 20;
@@ -21,10 +21,10 @@ class Button
 
   public:
     Button( std::string id, uint8_t pin );
-    unsigned long GetFallingEdgesCount();
-    unsigned long GetRisingEdgesCount();
-    bool IsFallingEdge();
-    bool IsRisingEdge();
+    unsigned long GetFallingEdgesCount() const;
+    unsigned long GetRisingEdgesCount() const;
+    bool IsFallingEdge() const;
+    bool IsRisingEdge() const;
 
   public:
     void Init() override;

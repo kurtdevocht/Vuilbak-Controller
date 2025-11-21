@@ -6,7 +6,7 @@
 #include "Component.h"
 
 class MQTTProxy
-  : Component
+  : public Component
 {
     private:
         std::string m_mqttServerName;
@@ -32,7 +32,7 @@ class MQTTProxy
         void CheckConnection();
         void Reconnect();    
         void PublishScore();
-        void CheckConnectionAndPublish( std::string topic, std::string value);
+        void CheckConnectionAndPublish( const std::string& topic, const std::string& value);
         std::string BuildDekselString( int value );
         std::string BuildCPSString( float value );
 };

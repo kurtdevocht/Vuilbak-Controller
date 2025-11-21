@@ -47,28 +47,27 @@ void Button::Update(unsigned long now_ms)
   if (m_isRisingEdge || m_isFallingEdge)
   {
     SetDebounceIgnoreTime( now_ms );
-    // LogStatus();
   }
 
   m_wasHighOnPreviousUpdate = pinIsHigh;
 }
 
-unsigned long Button::GetFallingEdgesCount()
+unsigned long Button::GetFallingEdgesCount() const
 {
   return m_fallingEdgeCount;
 }
 
-unsigned long Button::GetRisingEdgesCount()
+unsigned long Button::GetRisingEdgesCount() const
 {
   return m_risingEdgeCount;
 }
 
-bool Button::IsFallingEdge()
+bool Button::IsFallingEdge() const
 {
   return m_isFallingEdge;
 }
 
-bool Button::IsRisingEdge()
+bool Button::IsRisingEdge() const
 {
   return m_isRisingEdge;
 }
