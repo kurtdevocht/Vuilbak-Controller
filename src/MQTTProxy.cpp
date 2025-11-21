@@ -21,7 +21,7 @@ int BytesToInt( byte * bytes, unsigned int length )
     memcpy( buffer, bytes, length );
     buffer[length] = '\0';
 
-    char * pEnd = nullptr;
+    char * pEnd;
     int i = (int)strtol ( buffer, &pEnd, 10 );
     return i;
 }
@@ -142,7 +142,7 @@ void MQTTProxy::AnnounceGameStart( int playTime )
     );
 }
 
-void MQTTProxy::CheckConnectionAndPublish( std::string topic, std::string value)
+void MQTTProxy::CheckConnectionAndPublish( const std::string& topic, const std::string& value)
 {
     this->CheckConnection();
      m_mqttClient.publish( topic.c_str(), value.c_str() );
