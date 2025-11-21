@@ -2,18 +2,26 @@
 #include "Settings.h"
 #include <sstream>
 
-// Quick imlementation: just some globals... Deadline is approaching 8-|
-int g_LastReceivedVuilbak1Score ( 0 );
-int g_LastReceivedVuilbak2Score ( 0 );
-bool g_NewScoreReceived ( false );
+// Note: Global variables are used here because the PubSubClient library uses C-style callbacks
+// which cannot capture member variables. This is a common pattern in Arduino/embedded systems.
+// These variables track the scores received from the MQTT broker.
+namespace {
+    int g_LastReceivedVuilbak1Score = 0;
+    int g_LastReceivedVuilbak2Score = 0;
+    bool g_NewScoreReceived = false;
+}
 
 int BytesToInt( byte * bytes, unsigned int length )
 {
+    if (bytes == nullptr || length == 0) {
+        return 0;
+    }
+    
     char buffer [length + 1];
     memcpy( buffer, bytes, length );
     buffer[length] = '\0';
 
-    char * pEnd;
+    char * pEnd = nullptr;
     int i = (int)strtol ( buffer, &pEnd, 10 );
     return i;
 }

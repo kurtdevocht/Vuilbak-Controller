@@ -128,6 +128,9 @@ void InitMQTT()
   m_mqtt.Update( 0 ); // Force reconnect at startup
   Log( "MQTT Initialized!");
 }
+// Converts clicks per second to a "deksel" (lid) value for the game display
+// The required clicks per second increases linearly over the game duration
+// to make the game progressively harder
 int ClicksPerSecondToDekselValue( float clicksPerSecond, unsigned long gameRunTime_ms )
 {
   if( clicksPerSecond <= 0.0f )
@@ -141,14 +144,16 @@ int ClicksPerSecondToDekselValue( float clicksPerSecond, unsigned long gameRunTi
     return 0;
   }
 
+  // Calculate the required CPS for maximum deksel value based on game progress
   float neededCpsForMax =
     Settings::Game::ClicksPerSecondNeededForMaxDekselValueAtBeginOfGame
     + gameRunTime_ms * ( Settings::Game::ClicksPerSecondNeededForMaxDekselValueAtEndOfGame - Settings::Game::ClicksPerSecondNeededForMaxDekselValueAtBeginOfGame ) / gamePlayTime_ms;
 
+  // Calculate the deksel value proportional to the player's CPS
   int value = (int)(
     Settings::Game::MinDekselValue
     + clicksPerSecond * ( Settings::Game::MaxDekselValue - Settings::Game::MinDekselValue ) / neededCpsForMax
-    + 0.5f
+    + 0.5f  // Rounding
   );
 
   if( value > Settings::Game::MaxDekselValue )

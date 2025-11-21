@@ -44,7 +44,7 @@ namespace Settings
 
     namespace Pins
     {
-        // Connect this digital pin to the left switch of joystick of player 1. The other side of the switch must go to GND.
+        // Connect this digital pin to the start button. The other side of the switch must go to GND.
         static const uint8_t StartButton(26);
         
         // Connect this digital pin to the left switch of joystick of player 1. The other side of the switch must go to GND.
